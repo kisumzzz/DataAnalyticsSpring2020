@@ -35,19 +35,19 @@ bronx1<-bronx1[which(bronx1$GROSS.SQUARE.FEET!="0" & bronx1$LAND.SQUARE.FEET!="0
 View(bronx1)
 #
 attach(bronx1) # If you choose to attach, leave out the "data=." in lm regression
-SALE.PRICE<-sub("\\$","",SALE.PRICE) 
-SALE.PRICE<-as.numeric(gsub(",","", SALE.PRICE)) 
-GROSS.SQUARE.FEET<-as.numeric(gsub(",","", GROSS.SQUARE.FEET)) 
-LAND.SQUARE.FEET<-as.numeric(gsub(",","", LAND.SQUARE.FEET)) 
-plot(log(GROSS.SQUARE.FEET), log(SALE.PRICE)) 
-m1<-lm(log(SALE.PRICE)~log(GROSS.SQUARE.FEET))
+bronx1$SALE.PRICE<-sub("\\$","",bronx1$SALE.PRICE) 
+bronx1$SALE.PRICE<-as.numeric(gsub(",","", bronx1$SALE.PRICE)) 
+bronx1$GROSS.SQUARE.FEET<-as.numeric(gsub(",","", bronx1$GROSS.SQUARE.FEET)) 
+bronx1$LAND.SQUARE.FEET<-as.numeric(gsub(",","", bronx1$LAND.SQUARE.FEET)) 
+plot(log(bronx1$GROSS.SQUARE.FEET), log(bronx1$SALE.PRICE)) 
+m1<-lm(log(bronx1$SALE.PRICE)~log(bronx1$GROSS.SQUARE.FEET))
 summary(m1)
 abline(m1,col="red",lwd=2)
 plot(resid(m1))
 
 # Model 2
-
-m2<-lm(log(bronx1$SALE.PRICE)~log(bronx1$GROSS.SQUARE.FEET)+log(bronx1$LAND.SQUARE.FEET)+factor(bronx1$NEIGHBORHOOD))
+bronx1$NEIGHBORHOOD <- as.factor(bronx1$NEIGHBORHOOD)
+m2<-lm(log(bronx1$SALE.PRICE)~log(bronx1$GROSS.SQUARE.FEET)+log(bronx1$LAND.SQUARE.FEET)+bronx1$NEIGHBORHOOD)
 summary(m2)
 plot(resid(m2))
 # Suppress intercept - using "0+ ..."
@@ -64,8 +64,9 @@ plot(resid(m3))
 m4<-lm(log(bronx1$SALE.PRICE)~0+log(bronx1$GROSS.SQUARE.FEET)+log(bronx1$LAND.SQUARE.FEET)+factor(bronx1$NEIGHBORHOOD)*factor(bronx1$BUILDING.CLASS.CATEGORY))
 summary(m4)
 plot(resid(m4))
-#
 
+
+#Lab4_bronx2
 bronx1$SALE.PRICE<-sub("\\$","",bronx1$SALE.PRICE) 
 bronx1$SALE.PRICE<-as.numeric(gsub(",","", bronx1$SALE.PRICE)) 
 bronx1$GROSS.SQUARE.FEET<-as.numeric(gsub(",","", bronx1$GROSS.SQUARE.FEET)) 
@@ -78,7 +79,11 @@ minprice<-10000
 bronx1<-bronx1[which(bronx1$SALE.PRICE>=minprice),]
 nval<-dim(bronx1)[1]
 
-bronx1$ADDRESSONLY<- gsub("[,][[:print:]]*","",gsub("[ ]+","",trim(bronx1$ADDRESS))) bronxadd<-unique(data.frame(bronx1$ADDRESSONLY, bronx1$ZIP.CODE,stringsAsFactors=FALSE)) names(bronxadd)<-c("ADDRESSONLY","ZIP.CODE") bronxadd<-bronxadd[order(bronxadd$ADDRESSONLY),] duplicates<-duplicated(bronx1$ADDRESSONLY)
+bronx1$ADDRESSONLY<- gsub("[,][[:print:]]*","",gsub("[ ]+","",trim(bronx1$ADDRESS))) 
+bronxadd<-unique(data.frame(bronx1$ADDRESSONLY, bronx1$ZIP.CODE,stringsAsFactors=FALSE)) 
+names(bronxadd)<-c("ADDRESSONLY","ZIP.CODE") 
+bronxadd<-bronxadd[order(bronxadd$ADDRESSONLY),] 
+duplicates<-duplicated(bronx1$ADDRESSONLY)
 
 for(i in 1:2345) {
   if(duplicates[i]==FALSE) dupadd<-bronxadd[bronxadd$duplicates,1]
@@ -90,10 +95,13 @@ addsample<-bronxadd[sample.int(dim(bronxadd),size=nsample),]#I use nval here
 # may need to install this package
 library(ggmap)
 addrlist<-paste(addsample$ADDRESSONLY, "NY", addsample$ZIP.CODE, "US", sep=" ") 
+register_google(key = "AIzaSyAA1OechfSH9A7UgwHvtp4g_-afXcyqXEQ")
 querylist<-geocode(addrlist) #This is cool. Take a break.
 
-matched<-(querylist$lat!=0 &&querylist$lon!=0) addsample<-cbind(addsample,querylist$lat,querylist$lon) 
-names(addsample)<-c("ADDRESSONLY","ZIPCODE","Latitude","Longitude")# correct the column na adduse<-merge(bronx1,addsample)
+matched<-(querylist$lat!=0 &&querylist$lon!=0) 
+addsample<-cbind(addsample,querylist$lat,querylist$lon) 
+names(addsample)<-c("ADDRESSONLY","ZIPCODE","Latitude","Longitude")# correct the column na 
+adduse<-merge(bronx1,addsample)
 
 adduse<-adduse[!is.na(adduse$Latitude),]
 mapcoord<-adduse[,c(2,3,24,25)]
@@ -144,7 +152,8 @@ mapobj$centers
 library(cluster)
 clusplot(mapmeans, mapobj$cluster, color=TRUE, shade=TRUE, labels=2, lines=0) 
 #
-library(fpc)#May need to install.packages("fpc")
+library(fpc)
+#May need to install.packages("fpc")
 plotcluster(mapmeans, mapobj$cluster)
 #
 mapmeans1<-mapmeans[,-c(1,3,4)]
@@ -154,6 +163,7 @@ clusplot(mapmeans1, mapobjnew$cluster, color=TRUE, shade=TRUE, labels=2, lines=0
 plotcluster(mapmeans1, mapobjnew$cluster)
 ggmap(map) + geom_point(aes(x = mapcoord$Longitude, y = mapcoord$Latitude, size =1, color=mapobjnew$cluster), data = mapcoord)#How to change colors?
 
+#Lab4-ctee1
 pairs(~ Fertility + Education + Catholic, data = swiss, subset = Education < 20, main = "Swiss data, Education < 20")
 require(party)
 swiss_ctree <- ctree(Fertility ~ Agriculture + Education + Catholic, data = swiss)
@@ -173,7 +183,7 @@ summary(iris.kknn)
 fit <- fitted(iris.kknn)
 table(iris.valid$Species, fit)
 pcol <- as.character(as.numeric(iris.valid$Species))
-pairs(iris.valid[1:4], pch = pcol, col = c("green3",'redâ€')[(iris.valid$Species != fit)+1])
+pairs(iris.valid[1:4], pch = pcol, col = c("green3")[(iris.valid$Species != fit)+1])
 
 #kknn2
 require(kknn)
@@ -200,7 +210,8 @@ sclass <- kmeans(swiss[2:6], 3)
 table(sclass$cluster, swiss[,1])  
 
 # nyt
-nyt1<-read.csv("nyt1.csv")
+library(class)
+nyt1<-read.csv('/Users/kisumzzz/Downloads/nyt1.csv')
 nyt1<-nyt1[which(nyt1$Impressions>0 & nyt1$Clicks>0 & nyt1$Age>0),]
 nnyt1<-dim(nyt1)[1]		# shrink it down!
 sampling.rate=0.9
@@ -211,7 +222,8 @@ testing<-setdiff(1:nnyt1,training)
 test<-subset(nyt1[testing,],select=c(Age,Impressions))
 cg<-nyt1$Gender[training]
 true.labels<-nyt1$Gender[testing]
-classif<-knn(train,test,cg,k=5) #
+classif<-knn(train,test,cg,k=5)
+#
 classif
 attributes(.Last.value) 
 
